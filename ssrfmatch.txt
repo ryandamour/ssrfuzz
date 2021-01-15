@@ -1,0 +1,9 @@
+nologin
+ami-id
+instance-id
+identity-credentials
+SecretAccessKey
+AccessKeyId
+updateSuccess
+"maxmemory"
+alert(document.domain)

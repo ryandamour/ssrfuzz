@@ -1,25 +1,28 @@
 package cmd
 
 import (
-	"bufio"
-	"fmt"
-	"log"
-	"net/http"
-	"os"
+  "bufio"
+  "fmt"
+  "log"
+  "net/http"
+  "net/http/httptrace"
+  "os"
   "net/url"
-	"sync"
   "strings"
   "time"
   "errors"
   "bytes"
   "encoding/json"
   "crypto/tls"
+  "io/ioutil"
 
   "github.com/spf13/cobra"
 )
 
 var domains string
-var payloads string
+var crlfPayloads string
+var schemePayloads string
+var networkPayloads string
 var output string
 var userAgent string
 var timeout int
@@ -27,36 +30,50 @@ var threads int
 var delay int
 var verbose bool
 var slackHook string
+var httpMethod string
 var version = "v0.0.1"
 
 type SlackRequestBody struct {
-    Text string `json:"text"`
+  Text string `json:"text"`
 }
 
-func crlfMapCmd() *cobra.Command {
-  crlfMapCmd := &cobra.Command {
+type NetworkResults struct {
+  URL string `json:"url"`
+  connectionTime float64 `json:"connectionTime"`
+}
+
+type SchemeResults struct {
+  URL string `json:"url"`
+}
+
+// Save results for displaying and processing
+var schemeResults []SchemeResults
+var networkResults []NetworkResults
+
+func ssrfuzzCmd() *cobra.Command {
+  ssrfuzzCmd := &cobra.Command {
     Use:   "scan",
-    Short: "A scanner for all your CRLF needs",
-    Run: crlfMapFunc,
+    Short: "A scanner for all your SSRF Fuzzing needs",
+    Run: ssrfuzzFunc,
   }
 
-  crlfMapCmd.Flags().StringVarP(&domains, "domains", "d", "", "Location of domains with parameters to scan")
-  crlfMapCmd.Flags().StringVarP(&payloads, "payloads", "p", "payloads.txt", "Location of payloads to generate on requests")
-  crlfMapCmd.Flags().StringVarP(&output, "output", "o", "", "Location to save results")
-  crlfMapCmd.Flags().StringVarP(&userAgent, "user-agent", "u", "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36", "User agent for requests")
-  crlfMapCmd.Flags().IntVarP(&timeout, "timeout", "", 10, "The amount of time needed to close a connection that could be hung")
-  crlfMapCmd.Flags().IntVarP(&delay, "delay", "", 0, "The time each threads waits between requests in milliseconds")
-  crlfMapCmd.Flags().IntVarP(&threads, "threads", "t", 1, "Number of threads to run crlfmap on")
-  crlfMapCmd.Flags().BoolVarP(&verbose, "verbose", "v", false, "verbose output")
-  crlfMapCmd.Flags().StringVarP(&slackHook, "slack-webhook", "s", "",  "Slack webhook to send findings to a channel")
+  ssrfuzzCmd.Flags().StringVarP(&domains, "domains", "d", "", "Location of domains with parameters to scan")
+  ssrfuzzCmd.Flags().StringVarP(&crlfPayloads, "crlfPayloads", "c", "crlfpayloads.txt", "Location of crlfPayloads to generate on requests")
+  ssrfuzzCmd.Flags().StringVarP(&schemePayloads, "schemePayloads", "p", "schemepayloads.txt", "Location of schemePayloads to generate on requests")
+  ssrfuzzCmd.Flags().StringVarP(&networkPayloads, "networkPayloads", "n", "networkpayloads.txt", "Location of networkPayloads to generate on requests")
+  ssrfuzzCmd.Flags().StringVarP(&output, "output", "o", "", "Location to save results")
+  ssrfuzzCmd.Flags().StringVarP(&userAgent, "user-agent", "u", "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36", "User agent for requests")
+  ssrfuzzCmd.Flags().IntVarP(&timeout, "timeout", "", 10, "The amount of time needed to close a connection that could be hung")
+  ssrfuzzCmd.Flags().IntVarP(&delay, "delay", "", 100, "The time each threads waits between requests in milliseconds")
+  ssrfuzzCmd.Flags().IntVarP(&threads, "threads", "t", 50, "Number of threads to run crlfmap on")
+  ssrfuzzCmd.Flags().BoolVarP(&verbose, "verbose", "v", false, "verbose output")
+  ssrfuzzCmd.Flags().StringVarP(&slackHook, "slack-webhook", "s", "",  "Slack webhook to send findings to a channel")
+  ssrfuzzCmd.Flags().StringVarP(&httpMethod, "http-method", "x", "GET",  "HTTP Method - GET or POST.")
 
-  crlfMapCmd.MarkFlagRequired("domains")
-
-  return crlfMapCmd
+  return ssrfuzzCmd
 }
 
-func crlfMapFunc(cmd *cobra.Command, args []string) {
-    var wg sync.WaitGroup
+func ssrfuzzFunc(cmd *cobra.Command, args []string) {
 
     fmt.Printf(`
 
@@ -73,47 +90,117 @@ func crlfMapFunc(cmd *cobra.Command, args []string) {
 
     %s                                
 -----------------------
-:: Domains    : %s
-:: Payloads   : %s
-:: Threads    : %d
-:: Output     : %s
-:: User Agent : %s
-:: Timeout    : %d
-:: Delay      : %d
-:: Slack Hook : %s
+:: Domains        : %s
+:: CRLFPayloads   : %s
+:: SchemePayloads : %s
+:: Threads        : %d
+:: Output         : %s
+:: User Agent     : %s
+:: Timeout        : %d
+:: Delay          : %d
+:: Slack Hook     : %s
+:: HTTP Method    : %s
 -----------------------
-`, version, domains, payloads, threads, output, userAgent, timeout, delay, slackHook)
+`, version, domains, crlfPayloads, schemePayloads, threads, output, userAgent, timeout, delay, slackHook, httpMethod)
+
+    fmt.Println("[+] Fuzzing SSRF Scheme Payloads\n")
 
     if threads <= 0 {
       fmt.Println("Threads must be larger than 0")
       os.Exit(1)
     }
 
-    payloadsFile := fileReader(payloads)
-    domainsFile := fileReader(domains)
+    crlfPayloadsFile := fileReader(crlfPayloads)
+    schemePayloadsFile := fileReader(schemePayloads)
+    networkPayloadsFile := fileReader(networkPayloads)
 
-    for _, domain := range domainsFile {
-      for _, payload := range payloadsFile {
+    threadsChannel := make(chan struct{}, threads)
+    // If domains flag is present
+    if domains != "" {
+      domainsFile := fileReader(domains)
+      for _, domain := range domainsFile {
+        for _, schemePayload := range schemePayloadsFile {
+	  for _, crlfPayload := range crlfPayloadsFile {
 
-        fuzzedURL := fuzzURL(domain, payload)
+            fuzzedURL := fuzzURL(domain, crlfPayload, schemePayload)
 
-        for ithreads := 0; ithreads < threads; ithreads++ {
-          for _, requestURI := range *fuzzedURL {
-            wg.Add(1)
-            go makeRequest(requestURI, timeout, &wg)
-            if delay > 0 {
-              time.Sleep(time.Duration(delay) * time.Millisecond)
+            for _, requestURI := range *fuzzedURL {
+	      threadsChannel <- struct{}{}
+              go makeRequest(requestURI, timeout, threadsChannel, false, true)
+              if delay > 0 {
+                time.Sleep(time.Duration(delay) * time.Millisecond)
+              }
             }
-            wg.Wait()
           }
         }
-        wg.Wait()
-    }
-  }
-}
+      }
+    } else if domains == "" { // Read from stdin
+        stdinScanner := bufio.NewScanner(os.Stdin)
+        for stdinScanner.Scan() {
+          for _, schemePayload := range schemePayloadsFile {
+            for _, crlfPayload := range crlfPayloadsFile {
 
-func fuzzURL(domain string, payload string) *[]string {
-	var fuzzedURL []string
+              fuzzedURL := fuzzURL(stdinScanner.Text(), crlfPayload, schemePayload)
+
+              for _, requestURI := range *fuzzedURL {
+		threadsChannel <- struct{}{}
+                go makeRequest(requestURI, timeout, threadsChannel, false, true)
+                if delay > 0 {
+                  time.Sleep(time.Duration(delay) * time.Millisecond)
+                }
+              }
+            }
+          }
+        }
+      }
+
+    // TODO Add logic for network payloads 
+    // Fuzz Internal Connections
+    if domains != "" {
+      domainsFile := fileReader(domains)
+      for _, domain := range domainsFile {
+        for _, networkPayload := range networkPayloadsFile {
+          for _, crlfPayload := range crlfPayloadsFile {
+
+            fuzzedURL := fuzzURL(domain, crlfPayload, networkPayload)
+
+            for _, requestURI := range *fuzzedURL {
+              threadsChannel <- struct{}{}
+              go makeRequest(requestURI, timeout, threadsChannel, true, false)
+              if delay > 0 {
+                time.Sleep(time.Duration(delay) * time.Millisecond)
+              }
+            }
+          }
+        }
+      }
+    } else if domains == "" { // Read from stdin
+        stdinScanner := bufio.NewScanner(os.Stdin)
+        for stdinScanner.Scan() {
+          for _, networkPayload := range networkPayloadsFile {
+            for _, crlfPayload := range crlfPayloadsFile {
+
+              fuzzedURL := fuzzURL(stdinScanner.Text(), crlfPayload, networkPayload)
+
+              for _, requestURI := range *fuzzedURL {
+		threadsChannel <- struct{}{}
+                go makeRequest(requestURI, timeout, threadsChannel, true, false)
+                if delay > 0 {
+                  time.Sleep(time.Duration(delay) * time.Millisecond)
+                }
+              }
+            }
+          }
+        }
+      }
+
+    close(threadsChannel)
+    fmt.Println("Network results", networkResults)
+    fmt.Println("Scheme results", schemeResults)
+    }
+
+func fuzzURL(domain string, payload string, schemePayload string) *[]string {
+  var fuzzedURL []string
   var fuzzedParams []string
 
   // Make sure parameter are present
@@ -128,7 +215,8 @@ func fuzzURL(domain string, payload string) *[]string {
     // Clear list before concatentation again
     fuzzedParams = nil
     for _, param := range params {
-      fuzzedParams = append(fuzzedParams,param)
+      baseParam := strings.Split(param,"=")[0] // Remove everything after '=' so we can replace with our SSRF payloads 
+      fuzzedParams = append(fuzzedParams,baseParam+"="+schemePayload)
 
       if paramFuzzCount != (len(params) - 1) {
         fuzzedParams = append(fuzzedParams,"&")
@@ -159,7 +247,7 @@ func fuzzURL(domain string, payload string) *[]string {
   host := u.Host
 
   for endpointPayloadCount := 0; endpointPayloadCount < strings.Count(endpoint, "/"); endpointPayloadCount++ {
-    finalEndpoint := replaceNth(endpoint, "/", "/"+payload, endpointPayloadCount+1)
+    finalEndpoint := replaceNth(endpoint, "/", "/"+schemePayload+payload, endpointPayloadCount+1)
     finalEndpointUrl := []string{scheme,"://", host, finalEndpoint}
     flattenedURL := strings.Join(finalEndpointUrl, "")
     fuzzedURL = append(fuzzedURL,flattenedURL)
@@ -231,14 +319,23 @@ func fileReader(ulist string) []string {
 
 }
 
-func makeRequest(uri string, timeoutFlag int, wg *sync.WaitGroup) {
-  defer wg.Done()
+func checkResponse(content string) bool {
+  ssrfMatchFile := fileReader("ssrfmatch.txt")
+    for _, ssrfMatch := range ssrfMatchFile {
+      if strings.Contains(content, ssrfMatch) {
+        return true
+      } else {
+        return false
+    }
+  }
+  return false
+}
 
-	URL := uri
-
-	client := &http.Client{
-		CheckRedirect: func(req *http.Request, via []*http.Request) error {
-			return http.ErrUseLastResponse
+func makeRequest(uri string, timeoutFlag int, threadsChannel chan struct{}, networkPayload bool, schemePayload bool) {
+  URL := uri
+  client := &http.Client{
+    CheckRedirect: func(req *http.Request, via []*http.Request) error {
+      return http.ErrUseLastResponse
     },
     Timeout: time.Duration(timeoutFlag)*time.Second,
     Transport: &http.Transport{
@@ -249,14 +346,36 @@ func makeRequest(uri string, timeoutFlag int, wg *sync.WaitGroup) {
       },
     }}
 
-	req, err := http.NewRequest("GET", URL, nil)
+  req, err := http.NewRequest(httpMethod, URL, nil)
+
   if err != nil {
     if verbose == true {
       fmt.Println(err)
     }
+    <-threadsChannel
     return
   }
+
+
   req.Header.Set("User-Agent",userAgent)
+
+  var start, connect time.Time
+  var connectDone, ttfb time.Duration
+  trace := &httptrace.ClientTrace{
+    ConnectStart: func(network, addr string) { connect = time.Now() },
+    ConnectDone: func(network, addr string, err error) { connectDone = time.Since(connect) },
+    GotFirstResponseByte: func() { ttfb = time.Since(start) },
+  }
+
+  req = req.WithContext(httptrace.WithClientTrace(req.Context(), trace))
+
+  if err != nil {
+    if verbose == true {
+      fmt.Println(err)
+    }
+    <-threadsChannel
+    return
+  }
 
   resp, err := client.Do(req)
   if err != nil {
@@ -264,38 +383,43 @@ func makeRequest(uri string, timeoutFlag int, wg *sync.WaitGroup) {
   }
 
 
-	if err != nil {
+  if err != nil {
     if verbose == true {
       fmt.Println(err)
     }
-		return
-	}
+    <-threadsChannel
+    return
+  }
 
 
   if verbose == true {
-    fmt.Printf("%s (Status : %d)\n", URL, resp.StatusCode)
+    fmt.Printf("%s (Status : %d, %f)\n", URL, resp.StatusCode, float64(connectDone))
   }
 
-	for key := range resp.Header {
-		if key == "Injected-Header" {
-      if output != "" {
-        f, err := os.OpenFile(output, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
-        if err != nil {
-          if verbose == true {
-            fmt.Println(err)
-          }
+  if resp.StatusCode == 200 {
+    defer resp.Body.Close()
+    body, err := ioutil.ReadAll(resp.Body)
+    if err != nil {
+      fmt.Println(err)
+    }
+    // Save results for network payloads
+    if networkPayload {
+      networkResults = append(networkResults, NetworkResults{URL: URL, connectionTime: float64(connectDone)})
+    }
+    // Save results for scheme payloads
+    if schemePayload {
+      if checkResponse(string(body)) {
+	schemeResults = append(schemeResults, SchemeResults{URL: URL})
+	if verbose {
+          fmt.Println("[*]Found "+URL+"\n")
+          fmt.Println(string(body))
         }
-        f.WriteString(URL+"\n");
       }
-			fmt.Println("[+]" + URL + ": is Vulnerable")
-      if slackHook != "" {
-        SendSlackNotification(slackHook, URL + ": is vulnerable")
-      }
-		}
-	}
+    }
+  }
+  <-threadsChannel
 }
 
 func init() {
-  rootCmd.AddCommand(crlfMapCmd())
+  rootCmd.AddCommand(ssrfuzzCmd())
 }
-
