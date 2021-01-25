@@ -52,3 +52,5 @@ http://169.254.169.254%09google.com
 http://2852039166%09google.com
 http://169.254.169.254%2509google.com
 http://2852039166%2509google.com
+http://ifconfig.pro
+http:\/\/ifconfig.pro
