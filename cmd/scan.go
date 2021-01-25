@@ -19,6 +19,7 @@ import (
   "regexp"
   "sort"
 
+  "github.com/ryandamour/ssrfuzz/pkg"
   "github.com/spf13/cobra"
 )
 
@@ -135,10 +136,21 @@ func ssrfuzzFunc(cmd *cobra.Command, args []string) {
       os.Exit(1)
     }
 
-    crlfPayloadsFile := fileReader(crlfPayloads)
+    crlfPayloadsSlice := []string{}
+    schemePayloadsSlice := []string{}
+    networkPayloadsSlice := []string{}
 
-    schemePayloadsFile := fileReader(schemePayloads)
-    networkPayloadsFile := fileReader(networkPayloads)
+    if skipScheme != true {
+      schemePayloadsSlice = pkg.GetSchemePayloads()
+    }
+
+    if skipNetwork != true {
+      networkPayloadsSlice = pkg.GetNetworkPayloads()
+    }
+
+    if skipCRLF != true {
+      crlfPayloadsSlice = pkg.GetCRLFPayloads()
+    }
 
     threadsChannel := make(chan struct{}, threads)
 
@@ -158,8 +170,8 @@ func ssrfuzzFunc(cmd *cobra.Command, args []string) {
       if domains != "" {
         domainsFile := fileReader(domains)
         for _, domain := range domainsFile {
-          for _, schemePayload := range schemePayloadsFile {
-	    for _, crlfPayload := range crlfPayloadsFile {
+          for _, schemePayload := range schemePayloadsSlice {
+	    for _, crlfPayload := range crlfPayloadsSlice {
 
               fuzzedURL := fuzzURL(domain, crlfPayload, schemePayload)
 
@@ -175,8 +187,8 @@ func ssrfuzzFunc(cmd *cobra.Command, args []string) {
         }
       } else if domains == "" { // Read from stdin
 	  for _, url := range stdinResults  {
-            for _, schemePayload := range schemePayloadsFile {
-              for _, crlfPayload := range crlfPayloadsFile {
+            for _, schemePayload := range schemePayloadsSlice {
+              for _, crlfPayload := range crlfPayloadsSlice {
 
                 fuzzedURL := fuzzURL(url, crlfPayload, schemePayload)
 
@@ -197,7 +209,7 @@ func ssrfuzzFunc(cmd *cobra.Command, args []string) {
       if domains != "" {
         domainsFile := fileReader(domains)
         for _, domain := range domainsFile {
-          for _, schemePayload := range schemePayloadsFile {
+          for _, schemePayload := range schemePayloadsSlice {
 
             fuzzedURL := fuzzURL(domain, "", schemePayload)
 
@@ -212,7 +224,7 @@ func ssrfuzzFunc(cmd *cobra.Command, args []string) {
         }
       } else if domains == "" { // Read from stdin
           for _, url := range stdinResults  {
-            for _, schemePayload := range schemePayloadsFile {
+            for _, schemePayload := range schemePayloadsSlice {
 
               fuzzedURL := fuzzURL(url, "", schemePayload)
 
@@ -236,8 +248,8 @@ func ssrfuzzFunc(cmd *cobra.Command, args []string) {
       if domains != "" {
         domainsFile := fileReader(domains)
         for _, domain := range domainsFile {
-          for _, networkPayload := range networkPayloadsFile {
-            for _, crlfPayload := range crlfPayloadsFile {
+          for _, networkPayload := range networkPayloadsSlice {
+            for _, crlfPayload := range crlfPayloadsSlice {
 
               fuzzedURL := fuzzURL(domain, crlfPayload, networkPayload)
 
@@ -253,8 +265,8 @@ func ssrfuzzFunc(cmd *cobra.Command, args []string) {
         }
       } else if domains == "" { // Read from stdin
 	  for _,url := range(stdinResults) {
-            for _, networkPayload := range networkPayloadsFile {
-              for _, crlfPayload := range crlfPayloadsFile {
+            for _, networkPayload := range networkPayloadsSlice {
+              for _, crlfPayload := range crlfPayloadsSlice {
 
                 fuzzedURL := fuzzURL(url, crlfPayload, networkPayload)
 
@@ -274,7 +286,7 @@ func ssrfuzzFunc(cmd *cobra.Command, args []string) {
       if domains != "" {
         domainsFile := fileReader(domains)
         for _, domain := range domainsFile {
-          for _, networkPayload := range networkPayloadsFile {
+          for _, networkPayload := range networkPayloadsSlice {
 
             fuzzedURL := fuzzURL(domain, "", networkPayload)
 
@@ -289,7 +301,7 @@ func ssrfuzzFunc(cmd *cobra.Command, args []string) {
         }
       } else if domains == "" { // Read from stdin
           for _, url := range stdinResults  {
-            for _, networkPayload := range networkPayloadsFile {
+            for _, networkPayload := range networkPayloadsSlice {
 
               fuzzedURL := fuzzURL(url, "", networkPayload)
 
@@ -437,7 +449,7 @@ func fileReader(ulist string) []string {
 }
 
 func checkResponse(content string) bool {
-  ssrfMatchFile := fileReader("ssrfmatch.txt")
+  ssrfMatchFile := pkg.GetSSRFMatch() 
     for _, ssrfMatch := range ssrfMatchFile {
       if strings.Contains(content, ssrfMatch) {
         return true
