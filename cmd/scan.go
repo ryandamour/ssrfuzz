@@ -24,9 +24,6 @@ import (
 )
 
 var domains string
-var crlfPayloads string
-var schemePayloads string
-var networkPayloads string
 var output string
 var userAgent string
 var timeout int
@@ -76,9 +73,6 @@ func ssrfuzzCmd() *cobra.Command {
   }
 
   ssrfuzzCmd.Flags().StringVarP(&domains, "domains", "d", "", "Location of domains with parameters to scan")
-  ssrfuzzCmd.Flags().StringVarP(&crlfPayloads, "crlfPayloads", "c", "crlfpayloads.txt", "Location of crlfPayloads to generate on requests")
-  ssrfuzzCmd.Flags().StringVarP(&schemePayloads, "schemePayloads", "p", "schemepayloads.txt", "Location of schemePayloads to generate on requests")
-  ssrfuzzCmd.Flags().StringVarP(&networkPayloads, "networkPayloads", "n", "networkpayloads.txt", "Location of networkPayloads to generate on requests")
   ssrfuzzCmd.Flags().StringVarP(&output, "output", "o", "", "Location to save results")
   ssrfuzzCmd.Flags().StringVarP(&userAgent, "user-agent", "u", "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36", "User agent for requests")
   ssrfuzzCmd.Flags().IntVarP(&timeout, "timeout", "", 10, "The amount of time needed to close a connection that could be hung")
@@ -113,9 +107,6 @@ func ssrfuzzFunc(cmd *cobra.Command, args []string) {
     %s                                
 -----------------------
 :: Domains        : %s
-:: CRLFPayloads   : %s
-:: SchemePayloads : %s
-:: NetworkPayloads: %s
 :: Threads        : %d
 :: Output         : %s
 :: User Agent     : %s
@@ -123,13 +114,13 @@ func ssrfuzzFunc(cmd *cobra.Command, args []string) {
 :: Delay          : %d
 :: Slack Hook     : %s
 :: HTTP Method    : %s
-:: Skip CRLF      : %b
-:: Skip Network   : %b
-:: Skip Scheme    : %b
+:: Skip CRLF      : %v
+:: Skip Network   : %v
+:: Skip Scheme    : %v
 -----------------------
-`, version, domains, crlfPayloads, schemePayloads, networkPayloads, threads, output, userAgent, timeout, delay, slackHook, httpMethod, skipCRLF, skipNetwork, skipScheme)
+`, version, domains, threads, output, userAgent, timeout, delay, slackHook, httpMethod, skipCRLF, skipNetwork, skipScheme)
 
-    fmt.Println("[+] Fuzzing SSRF Scheme Payloads\n")
+    fmt.Println("[+] Starting SSRF Fuzzing\n")
 
     if threads <= 0 {
       fmt.Println("Threads must be larger than 0")
@@ -449,7 +440,7 @@ func fileReader(ulist string) []string {
 }
 
 func checkResponse(content string) bool {
-  ssrfMatchFile := pkg.GetSSRFMatch() 
+  ssrfMatchFile := pkg.GetSSRFMatch()
     for _, ssrfMatch := range ssrfMatchFile {
       if strings.Contains(content, ssrfMatch) {
         return true
@@ -575,7 +566,6 @@ func findAnomalies(networkResults []NetworkResults, schemeResults []SchemeResult
 
   var statusCodePlaceHolder []int
   var baseURLPlaceHolder = ""
-  fmt.Println(networkAnomalies)
   for _, result := range networkAnomalies {
     if baseURLPlaceHolder != result.BaseURL {
       statusCodeResults := findUniqueValue(statusCodePlaceHolder)
