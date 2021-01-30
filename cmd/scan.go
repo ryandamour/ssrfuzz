@@ -331,8 +331,7 @@ func fuzzURL(domain string, payload string, schemePayload string) *[]string {
     // Clear list before concatentation again
     fuzzedParams = nil
     for _, param := range params {
-      baseParam := strings.Split(param,"=")[0] // Remove everything after '=' so we can replace with our SSRF payloads 
-      fuzzedParams = append(fuzzedParams,baseParam+"="+schemePayload)
+      fuzzedParams = append(fuzzedParams,param)
 
       if paramFuzzCount != (len(params) - 1) {
         fuzzedParams = append(fuzzedParams,"&")
@@ -346,13 +345,24 @@ func fuzzURL(domain string, payload string, schemePayload string) *[]string {
       finalFuzzedParams := make([]string, len(fuzzedParams))
       copy(finalFuzzedParams, fuzzedParams)
       if skipCRLF == false {
-        finalFuzzedParams[paramPayloadCount] = fuzzedParams[paramPayloadCount] + payload
+	// We take the recompliled parameter string, split it by the special character, and then keep the first element after the split.
+	// This is so we can fuzz other parts of the string at a later point in time if we want.
+	// ie: param=123 gets split so we can parse and append to "param" with our payloads.
+	// However, we may want to add things such as crlf payloads in a different order, such as param%0A=123
+        if finalFuzzedParams[paramPayloadCount] != "&" {
+          finalFuzzedParams[paramPayloadCount] = strings.Split(fuzzedParams[paramPayloadCount], "=")[0] + "=" + schemePayload + payload
+        }
       } else if skipCRLF == true {
-        finalFuzzedParams[paramPayloadCount] = fuzzedParams[paramPayloadCount]
+	  if finalFuzzedParams[paramPayloadCount] != "&" {
+            finalFuzzedParams[paramPayloadCount] = strings.Split(fuzzedParams[paramPayloadCount], "=")[0] + "=" + schemePayload
+          }
       }
 
-      flattenedURL := URL+strings.Join(finalFuzzedParams[:], "")
-      fuzzedURL = append(fuzzedURL,flattenedURL)
+      // Keeping this logic abstracted for reasonings mentioned above.  I may want to fuzz "&" specifically for crlf injections through this process.
+      if finalFuzzedParams[paramPayloadCount] != "&" {
+        flattenedURL := URL+strings.Join(finalFuzzedParams[:], "")
+        fuzzedURL = append(fuzzedURL,flattenedURL)
+      }
     }
   }
 
@@ -368,7 +378,9 @@ func fuzzURL(domain string, payload string, schemePayload string) *[]string {
 
   if skipCRLF == false {
     for endpointPayloadCount := 0; endpointPayloadCount < strings.Count(endpoint, "/"); endpointPayloadCount++ {
-      finalEndpoint := replaceNth(endpoint, "/", "/"+schemePayload+payload, endpointPayloadCount+1)
+      // Commenting this out to abstract later.  It's currently replacing "/" with ssrf payloads.  We would want crlf only in the future.
+      //finalEndpoint := replaceNth(endpoint, "/", "/"+schemePayload+payload, endpointPayloadCount+1)
+      finalEndpoint := schemePayload+payload
       finalEndpointUrl := []string{scheme,"://", host, finalEndpoint}
       flattenedURL := strings.Join(finalEndpointUrl, "")
       fuzzedURL = append(fuzzedURL,flattenedURL)
