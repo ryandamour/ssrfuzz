@@ -366,22 +366,21 @@ func fuzzURL(domain string, payload string, schemePayload string) *[]string {
     }
   }
 
-  //Fuzz endpoints.  Keeping this seperated from parameters.  Maybe add flags for types of fuzzing later?
+  //Fuzz endpoints.  Keeping this seperated from parameters.
   u, err := url.Parse(domain)
   if err != nil {
     panic(err)
   }
 
-  endpoint := u.Path
   scheme := u.Scheme
   host := u.Host
+  endpoint := u.Path
+  query := u.RawQuery
 
   if skipCRLF == false {
     for endpointPayloadCount := 0; endpointPayloadCount < strings.Count(endpoint, "/"); endpointPayloadCount++ {
-      // Commenting this out to abstract later.  It's currently replacing "/" with ssrf payloads.  We would want crlf only in the future.
-      //finalEndpoint := replaceNth(endpoint, "/", "/"+schemePayload+payload, endpointPayloadCount+1)
-      finalEndpoint := schemePayload+payload
-      finalEndpointUrl := []string{scheme,"://", host, finalEndpoint}
+      finalEndpoint := replaceNth(endpoint, "/", "/"+payload, endpointPayloadCount+1)
+      finalEndpointUrl := []string{scheme,"://", host,finalEndpoint+"?"+query}
       flattenedURL := strings.Join(finalEndpointUrl, "")
       fuzzedURL = append(fuzzedURL,flattenedURL)
     }
@@ -543,9 +542,9 @@ func makeRequest(uri string, timeoutFlag int, threadsChannel chan struct{}, netw
     networkResults = append(networkResults, NetworkResults{Port: port, URL: URL, StatusCode: resp.StatusCode, connectionTime: float64(connectDone / time.Millisecond)})
   }
 
+  defer resp.Body.Close()
 
   if resp.StatusCode == 200 {
-    defer resp.Body.Close()
     body, err := ioutil.ReadAll(resp.Body)
     if err != nil {
       fmt.Println(err)
