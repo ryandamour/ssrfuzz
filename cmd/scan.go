@@ -32,6 +32,7 @@ var delay int
 var verbose bool
 var slackHook string
 var httpMethod string
+var cookie string
 var skipCRLF bool
 var skipNetwork bool
 var skipScheme bool
@@ -75,6 +76,7 @@ func ssrfuzzCmd() *cobra.Command {
   ssrfuzzCmd.Flags().StringVarP(&domains, "domains", "d", "", "Location of domains with parameters to scan")
   ssrfuzzCmd.Flags().StringVarP(&output, "output", "o", "", "Location to save results")
   ssrfuzzCmd.Flags().StringVarP(&userAgent, "user-agent", "u", "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36", "User agent for requests")
+  ssrfuzzCmd.Flags().StringVarP(&cookie, "cookie", "c", "", "Cookie to use for requests")
   ssrfuzzCmd.Flags().IntVarP(&timeout, "timeout", "", 10, "The amount of time needed to close a connection that could be hung")
   ssrfuzzCmd.Flags().IntVarP(&delay, "delay", "", 100, "The time each threads waits between requests in milliseconds")
   ssrfuzzCmd.Flags().IntVarP(&threads, "threads", "t", 50, "Number of threads to run crlfmap on")
@@ -479,6 +481,10 @@ func makeRequest(uri string, timeoutFlag int, threadsChannel chan struct{}, netw
 
 
   req.Header.Set("User-Agent",userAgent)
+
+  if cookie != "" {
+    req.Header.Add("Cookie", cookie)
+  }
 
   var start, connect time.Time
   var connectStart, connectDone, ttfb time.Duration
