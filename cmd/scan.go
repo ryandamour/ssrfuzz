@@ -36,7 +36,7 @@ var cookie string
 var skipCRLF bool
 var skipNetwork bool
 var skipScheme bool
-var version = "v0.0.1"
+var version = "v1.0"
 
 type SlackRequestBody struct {
   Text string `json:"text"`
