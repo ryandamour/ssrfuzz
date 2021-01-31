@@ -40,7 +40,7 @@ Flags:
 * Scanning http and scheme payloads w/ crlf:
 ```go
 echo "http://192.168.1.10/test.php?u=" | go run main.go scan
-...
+```
  
 [!] Scheme payload match:
 * http://192.168.1.10/test.php?u=file://etc/passwd 200
@@ -62,7 +62,7 @@ echo "http://192.168.1.10/test.php?u=" | go run main.go scan
 * Scanning only http payloads w/ crlf:
 ```go
 echo "http://192.168.1.10/test.php?u=" | go run main.go scan --skip-scheme
-...
+```
 
 [!] Interesting payloads found
 * http://192.168.1.10/test.php?u=http://127.127.127.127:80%23%OA 200
@@ -83,7 +83,7 @@ echo "http://192.168.1.10/test.php?u=" | go run main.go scan --skip-scheme
 * Scanning only http payloads w/ crlf:
 ```go
 echo "http://192.168.1.10/test.php?u=" | go run main.go scan --skip-scheme --skip-crlf
-...
+```
 
 [!] Interesting payloads found
 * http://192.168.1.10/test.php?u=http://127.1.0.0:80 200
