@@ -2,7 +2,6 @@ builds:
   - binary: ssrfuzz
     goos:
       - linux
-      - windows
       - freebsd
       - openbsd
       - darwin
@@ -14,7 +13,7 @@ builds:
     ignore:
       - goos: 
           freebsd
-          windows
+        goarch: arm64
 
 archives:
   - id: tgz
