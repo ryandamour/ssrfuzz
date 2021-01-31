@@ -1,6 +1,11 @@
 # SSRFUZZ
 
-Foobar is a Python library for dealing with word pluralization.
+SSRFuzz is a tool to find Server Side Request Forgery vulnerabilities, with CRLF chaining capabilities
+
+## Why?
+- I wanted to write a tool in Golang for concurrency
+- I wanted to fuzz parameters for SSRF vulnerablities, as well as fuzz _both_ paths and parameters for CRLF injections
+- I was inspired by Orange's work for chaining these types of vulnerabilities together (https://blog.orange.tw)
 
 ## Installation
 
@@ -13,6 +18,18 @@ go get -u github.com/ryandamour/ssrfuzz
 ## Usage
 
 ```go
+
+  ██████   ██████  ██▀███    █████▒█    ██ ▒███████▒▒███████▒
+▒██    ▒ ▒██    ▒ ▓██ ▒ ██▒▓██   ▒ ██  ▓██▒▒ ▒ ▒ ▄▀░▒ ▒ ▒ ▄▀░
+░ ▓██▄   ░ ▓██▄   ▓██ ░▄█ ▒▒████ ░▓██  ▒██░░ ▒ ▄▀▒░ ░ ▒ ▄▀▒░ 
+  ▒   ██▒  ▒   ██▒▒██▀▀█▄  ░▓█▒  ░▓▓█  ░██░  ▄▀▒   ░  ▄▀▒   ░
+▒██████▒▒▒██████▒▒░██▓ ▒██▒░▒█░   ▒▒█████▓ ▒███████▒▒███████▒
+▒ ▒▓▒ ▒ ░▒ ▒▓▒ ▒ ░░ ▒▓ ░▒▓░ ▒ ░   ░▒▓▒ ▒ ▒ ░▒▒ ▓░▒░▒░▒▒ ▓░▒░▒
+░ ░▒  ░ ░░ ░▒  ░ ░  ░▒ ░ ▒░ ░     ░░▒░ ░ ░ ░░▒ ▒ ░ ▒░░▒ ▒ ░ ▒
+░  ░  ░  ░  ░  ░    ░░   ░  ░ ░    ░░░ ░ ░ ░ ░ ░ ░ ░░ ░ ░ ░ ░
+      ░        ░     ░               ░       ░ ░      ░ ░    
+                                           ░        ░        
+
 ===============================================================
 SSRFUZZ v1.0.0
 by Ryan D'Amour @ryandamour 
@@ -22,6 +39,8 @@ Usage:
   crlfmap scan [flags]
 
 Flags:
+  -c, --cookie string          Cookie to use for requests
+      --crlf-path              Add CRLF payloads to all available paths (ie: site.com/%0Atest.php)
       --delay int              The time each threads waits between requests in milliseconds (default 100)
   -d, --domains string         Location of domains with parameters to scan
   -h, --help                   help for scan
