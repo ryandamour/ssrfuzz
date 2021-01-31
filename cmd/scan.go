@@ -114,6 +114,7 @@ func ssrfuzzFunc(cmd *cobra.Command, args []string) {
 :: Threads        : %d
 :: Output         : %s
 :: User Agent     : %s
+:: Cookie         : %s
 :: Timeout        : %d
 :: Delay          : %d
 :: Slack Hook     : %s
@@ -122,7 +123,7 @@ func ssrfuzzFunc(cmd *cobra.Command, args []string) {
 :: Skip Network   : %v
 :: Skip Scheme    : %v
 -----------------------
-`, version, domains, threads, output, userAgent, timeout, delay, slackHook, httpMethod, skipCRLF, skipNetwork, skipScheme)
+`, version, domains, threads, output, userAgent, cookie, timeout, delay, slackHook, httpMethod, skipCRLF, skipNetwork, skipScheme)
 
     fmt.Println("[+] Starting SSRF Fuzzing\n")
 
