@@ -107,7 +107,7 @@ echo "http://192.168.1.10/test.php?u=" | go run main.go scan --skip-scheme
 ```
 
 ```go
-* Scanning only http payloads w/ crlf:
+* Scanning only http payloads w/o crlf:
 
 echo "http://192.168.1.10/test.php?u=" | go run main.go scan --skip-scheme --skip-crlf
 
