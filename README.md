@@ -36,10 +36,9 @@ Flags:
   -u, --user-agent string      User agent for requests (default "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36")
   -v, --verbose                verbose output
 
-```
+```go
 * Scanning http and scheme payloads w/ crlf:
 
-```go
 echo "http://192.168.1.10/test.php?u=" | go run main.go scan
  
 [!] Scheme payload match:
