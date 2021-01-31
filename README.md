@@ -56,6 +56,13 @@ Flags:
   -v, --verbose                verbose output
 ```
 
+```bash
+Usage: 
+echo "http://url_to_fuzz" | ssrfuzz scan
+cat file_of_domains.txt | ssrfuzz scan
+ssrfuzz scan -d file_of_domains.txt
+```
+
 ```go
 * Scanning http and scheme payloads w/ crlf:
 
