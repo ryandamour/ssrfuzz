@@ -7,7 +7,7 @@ Foobar is a Python library for dealing with word pluralization.
 Run the following command to intsall
 
 ```bash
-go get github.com/ryandamour/ssrfuzz
+go get -u github.com/ryandamour/ssrfuzz
 ```
 
 ## Usage
