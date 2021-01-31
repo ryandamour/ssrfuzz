@@ -15,7 +15,6 @@ builds:
       - goos: 
           freebsd
           windows
-        goarch: arm64
 
 archives:
   - id: tgz
