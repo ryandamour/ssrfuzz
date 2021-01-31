@@ -1,5 +1,5 @@
 builds:
-  - binary: crlfmap
+  - binary: ssrfuzz
     goos:
       - linux
       - windows
