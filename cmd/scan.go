@@ -34,6 +34,7 @@ var slackHook string
 var httpMethod string
 var cookie string
 var skipCRLF bool
+var CRLFPath bool
 var skipNetwork bool
 var skipScheme bool
 var version = "v1.0"
@@ -84,6 +85,7 @@ func ssrfuzzCmd() *cobra.Command {
   ssrfuzzCmd.Flags().StringVarP(&slackHook, "slack-webhook", "s", "",  "Slack webhook to send findings to a channel")
   ssrfuzzCmd.Flags().StringVarP(&httpMethod, "http-method", "x", "GET",  "HTTP Method - GET or POST")
   ssrfuzzCmd.Flags().BoolVarP(&skipCRLF, "skip-crlf", "", false,  "Skip CRLF fuzzing")
+  ssrfuzzCmd.Flags().BoolVarP(&CRLFPath, "crlf-path", "", false,  "Add CRLF payloads to all available paths (ie: site.com/%0Atest.php)")
   ssrfuzzCmd.Flags().BoolVarP(&skipNetwork, "skip-network", "", false,  "Skip network fuzzing")
   ssrfuzzCmd.Flags().BoolVarP(&skipScheme, "skip-scheme", "", false,  "Skip scheme fuzzing")
 
@@ -377,7 +379,7 @@ func fuzzURL(domain string, payload string, schemePayload string) *[]string {
   endpoint := u.Path
   query := u.RawQuery
 
-  if skipCRLF == false {
+  if skipCRLF == false && CRLFPath == true {
     for endpointPayloadCount := 0; endpointPayloadCount < strings.Count(endpoint, "/"); endpointPayloadCount++ {
       finalEndpoint := replaceNth(endpoint, "/", "/"+payload, endpointPayloadCount+1)
       finalEndpointUrl := []string{scheme,"://", host,finalEndpoint+"?"+query}
@@ -565,6 +567,7 @@ func makeRequest(uri string, timeoutFlag int, threadsChannel chan struct{}, netw
 
 func findAnomalies(networkResults []NetworkResults, schemeResults []SchemeResults) {
 
+
   //Network Anomalies
   for _, network := range networkResults {
     re := regexp.MustCompile(":([0-9]{1,4}|[1-5][0-9]{4}|6[0-4][0-9]{3}|65[0-4][0-9]{2}|655[0-2][0-9]|6553[0-5])")
@@ -581,16 +584,42 @@ func findAnomalies(networkResults []NetworkResults, schemeResults []SchemeResult
     return networkAnomalies[i].BaseURL < networkAnomalies[j].BaseURL
   })
 
+  //Create output file if it doesn't exist
+
   var statusCodePlaceHolder []int
   var baseURLPlaceHolder = ""
   for _, result := range networkAnomalies {
     if baseURLPlaceHolder != result.BaseURL {
       statusCodeResults := findUniqueValue(statusCodePlaceHolder)
       if len(statusCodeResults) > 1 {
+        //Write to output file
+        if output != "" {
+          f, err := os.OpenFile(output, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+          if err != nil {
+            if verbose == true {
+              fmt.Println(err)
+            }
+          }
+          f.WriteString("[!] Interesting payloads found"+"\n")
+          for _, finalResult := range networkAnomalies {
+            if finalResult.BaseURL == baseURLPlaceHolder {
+              f.WriteString("* "+string(finalResult.Payload)+" "+strconv.Itoa(finalResult.StatusCode)+"\n")
+            }
+          }
+        defer f.Close()
+        }
+
         fmt.Println("[!] Interesting payloads found")
+        if slackHook != "" {
+          SendSlackNotification(slackHook, "[!] Interesting payloads found")
+        }
+
 	for _, finalResult := range networkAnomalies {
           if finalResult.BaseURL == baseURLPlaceHolder {
             fmt.Println("*",finalResult.Payload,finalResult.StatusCode)
+              if slackHook != "" {
+                SendSlackNotification(slackHook, "*"+finalResult.Payload+strconv.Itoa(finalResult.StatusCode))
+              }
 	  }
 	}
       }
@@ -602,8 +631,26 @@ func findAnomalies(networkResults []NetworkResults, schemeResults []SchemeResult
   }
 
   //Scheme Anomalies
+
+  //Write to output file
+  if output != "" {
+    f, err := os.OpenFile(output, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+    if err != nil {
+      if verbose == true {
+        fmt.Println(err)
+      }
+    }
+    for _, scheme := range schemeResults {
+      f.WriteString("[!] Scheme payload match: "+scheme.URL+"\n")
+    }
+  defer f.Close()
+  }
+
   for _, scheme := range schemeResults {
     fmt.Println("[!] Scheme payload match: "+scheme.URL+"\n")
+    if slackHook != "" {
+      SendSlackNotification(slackHook, "[!] Scheme payload match: "+scheme.URL)
+    }
   }
 
 }
