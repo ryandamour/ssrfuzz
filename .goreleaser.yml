@@ -12,7 +12,9 @@ builds:
       - arm
       - arm64
     ignore:
-      - goos: freebsd
+      - goos: 
+          freebsd
+          windows
         goarch: arm64
 
 archives:
@@ -20,9 +22,6 @@ archives:
     format: tar.gz
     replacements:
         darwin: macOS
-    format_overrides:
-        - goos: windows
-          format: zip
 
 signs:
   - artifacts: checksum
