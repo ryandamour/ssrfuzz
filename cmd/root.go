@@ -12,7 +12,7 @@ import (
 var mainContext context.Context
 
 var rootCmd = &cobra.Command{
-	Use:          "crlfmap",
+	Use:          "ssrfuzz",
 	SilenceUsage: true,
 }
 

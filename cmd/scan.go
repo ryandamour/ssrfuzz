@@ -80,7 +80,7 @@ func ssrfuzzCmd() *cobra.Command {
   ssrfuzzCmd.Flags().StringVarP(&cookie, "cookie", "c", "", "Cookie to use for requests")
   ssrfuzzCmd.Flags().IntVarP(&timeout, "timeout", "", 10, "The amount of time needed to close a connection that could be hung")
   ssrfuzzCmd.Flags().IntVarP(&delay, "delay", "", 100, "The time each threads waits between requests in milliseconds")
-  ssrfuzzCmd.Flags().IntVarP(&threads, "threads", "t", 50, "Number of threads to run crlfmap on")
+  ssrfuzzCmd.Flags().IntVarP(&threads, "threads", "t", 50, "Number of threads to run ssrfuzz on")
   ssrfuzzCmd.Flags().BoolVarP(&verbose, "verbose", "v", false, "verbose output")
   ssrfuzzCmd.Flags().StringVarP(&slackHook, "slack-webhook", "s", "",  "Slack webhook to send findings to a channel")
   ssrfuzzCmd.Flags().StringVarP(&httpMethod, "http-method", "x", "GET",  "HTTP Method - GET or POST")
