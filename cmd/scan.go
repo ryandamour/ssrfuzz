@@ -38,7 +38,7 @@ var skipCRLF bool
 var CRLFPath bool
 var skipNetwork bool
 var skipScheme bool
-var version = "v1.0"
+var version = "v1.2"
 
 type SlackRequestBody struct {
   Text string `json:"text"`

@@ -31,7 +31,7 @@ go get -u github.com/ryandamour/ssrfuzz
                                            ░        ░        
 
 ===============================================================
-SSRFUZZ v1.0.0
+SSRFUZZ 1.2
 by Ryan D'Amour @ryandamour 
 ===============================================================A scanner for all your SSRF Fuzzing needs
 
