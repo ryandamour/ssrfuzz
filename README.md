@@ -39,6 +39,7 @@ Usage:
   ssrfuzz scan [flags]
 
 Flags:
+  -b, --call-back string       Add callback for SSRF fuzzing (ie: https://github.com/ropnop/serverless_toolkit/tree/master/ssrf_slack)
   -c, --cookie string          Cookie to use for requests
       --crlf-path              Add CRLF payloads to all available paths (ie: site.com/%0Atest.php)
       --delay int              The time each threads waits between requests in milliseconds (default 100)
