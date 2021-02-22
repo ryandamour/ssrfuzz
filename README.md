@@ -128,3 +128,6 @@ Please make sure to update tests as appropriate.
 ## License
 [MIT](https://choosealicense.com/licenses/mit/)
 
+## Sponsored By
+[Stage2Security](https://www.stage2sec.com)
+![alt text](https://miro.medium.com/max/168/1*Pzr_iwx12ycGpGg0K0Yauw.png)
