@@ -32,12 +32,13 @@ var delay int
 var verbose bool
 var slackHook string
 var httpMethod string
+var callBack string
 var cookie string
 var skipCRLF bool
 var CRLFPath bool
 var skipNetwork bool
 var skipScheme bool
-var version = "v1.0"
+var version = "v1.2"
 
 type SlackRequestBody struct {
   Text string `json:"text"`
@@ -80,7 +81,7 @@ func ssrfuzzCmd() *cobra.Command {
   ssrfuzzCmd.Flags().StringVarP(&cookie, "cookie", "c", "", "Cookie to use for requests")
   ssrfuzzCmd.Flags().IntVarP(&timeout, "timeout", "", 10, "The amount of time needed to close a connection that could be hung")
   ssrfuzzCmd.Flags().IntVarP(&delay, "delay", "", 100, "The time each threads waits between requests in milliseconds")
-  ssrfuzzCmd.Flags().IntVarP(&threads, "threads", "t", 50, "Number of threads to run crlfmap on")
+  ssrfuzzCmd.Flags().IntVarP(&threads, "threads", "t", 50, "Number of threads to run ssrfuzz on")
   ssrfuzzCmd.Flags().BoolVarP(&verbose, "verbose", "v", false, "verbose output")
   ssrfuzzCmd.Flags().StringVarP(&slackHook, "slack-webhook", "s", "",  "Slack webhook to send findings to a channel")
   ssrfuzzCmd.Flags().StringVarP(&httpMethod, "http-method", "x", "GET",  "HTTP Method - GET or POST")
@@ -88,6 +89,7 @@ func ssrfuzzCmd() *cobra.Command {
   ssrfuzzCmd.Flags().BoolVarP(&CRLFPath, "crlf-path", "", false,  "Add CRLF payloads to all available paths (ie: site.com/%0Atest.php)")
   ssrfuzzCmd.Flags().BoolVarP(&skipNetwork, "skip-network", "", false,  "Skip network fuzzing")
   ssrfuzzCmd.Flags().BoolVarP(&skipScheme, "skip-scheme", "", false,  "Skip scheme fuzzing")
+  ssrfuzzCmd.Flags().StringVarP(&callBack, "call-back", "b", "",  "Add callback for SSRF fuzzing (ie: https://github.com/ropnop/serverless_toolkit/tree/master/ssrf_slack)")
 
   return ssrfuzzCmd
 }
@@ -122,8 +124,9 @@ func ssrfuzzFunc(cmd *cobra.Command, args []string) {
 :: Skip CRLF      : %v
 :: Skip Network   : %v
 :: Skip Scheme    : %v
+:: Call Back      : %s 
 -----------------------
-`, version, domains, threads, output, userAgent, cookie, timeout, delay, slackHook, httpMethod, skipCRLF, skipNetwork, skipScheme)
+`, version, domains, threads, output, userAgent, cookie, timeout, delay, slackHook, httpMethod, skipCRLF, skipNetwork, skipScheme, callBack)
 
     fmt.Println("[+] Starting SSRF Fuzzing\n")
 
@@ -138,6 +141,9 @@ func ssrfuzzFunc(cmd *cobra.Command, args []string) {
 
     if skipScheme != true {
       schemePayloadsSlice = pkg.GetSchemePayloads()
+      if callBack != "" {
+        schemePayloadsSlice = append(schemePayloadsSlice, callBack)
+      }
     }
 
     if skipNetwork != true {

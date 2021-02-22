@@ -12,7 +12,7 @@ import (
 var mainContext context.Context
 
 var rootCmd = &cobra.Command{
-	Use:          "crlfmap",
+	Use:          "ssrfuzz",
 	SilenceUsage: true,
 }
 
@@ -47,7 +47,7 @@ func Execute() {
 
 func init() {
   fmt.Printf(`===============================================================
-SSRFUZZ v1.0
+SSRFUZZ v1.2
 by Ryan D'Amour @ryandamour 
 ===============================================================`)
 }

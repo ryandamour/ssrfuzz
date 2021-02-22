@@ -31,14 +31,15 @@ go get -u github.com/ryandamour/ssrfuzz
                                            ░        ░        
 
 ===============================================================
-SSRFUZZ v1.0.0
+SSRFUZZ 1.2
 by Ryan D'Amour @ryandamour 
 ===============================================================A scanner for all your SSRF Fuzzing needs
 
 Usage:
-  crlfmap scan [flags]
+  ssrfuzz scan [flags]
 
 Flags:
+  -b, --call-back string       Add callback for SSRF fuzzing (ie: https://github.com/ropnop/serverless_toolkit/tree/master/ssrf_slack)
   -c, --cookie string          Cookie to use for requests
       --crlf-path              Add CRLF payloads to all available paths (ie: site.com/%0Atest.php)
       --delay int              The time each threads waits between requests in milliseconds (default 100)
@@ -50,7 +51,7 @@ Flags:
       --skip-network           Skip network fuzzing
       --skip-scheme            Skip scheme fuzzing
   -s, --slack-webhook string   Slack webhook to send findings to a channel
-  -t, --threads int            Number of threads to run crlfmap on (default 50)
+  -t, --threads int            Number of threads to run ssrfuzz on (default 50)
       --timeout int            The amount of time needed to close a connection that could be hung (default 10)
   -u, --user-agent string      User agent for requests (default "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36")
   -v, --verbose                verbose output
@@ -119,6 +120,18 @@ echo "http://192.168.1.10/test.php?u=" | go run main.go scan --skip-scheme --ski
 * http://192.168.1.10/test.php?u=http://127.1.0.0:25 500
 * http://192.168.1.10/test.php?u=http://127.1.0.0:445 500
 ```
+
+```go
+* Scanning only scheme payloads w/o crlf:
+
+echo "http://192.168.1.10/test.php?u=" | go run main.go scan --skip-network --skip-crlf
+
+[!] Interesting payloads found
+* http://192.168.1.10/test.php?u=file:///etc/passwd 200
+* http://192.168.1.10/test.php?u=file:///etc/shadow 500
+* http://192.168.1.10/test.php?u=file://169.254.169.254/ 500
+```
+
 
 ## Contributing
 Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
