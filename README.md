@@ -1,6 +1,6 @@
 # SSRFUZZ
 
-SSRFuzz is a tool to find Server Side Request Forgery vulnerabilities, with CRLF chaining capabilities
+SSRFuzz is a tool to find Server Side Request Forgery vulnerabilities, with CRLF chaining capabilities.
 
 ## Why?
 - I wanted to write a tool in Golang for concurrency
@@ -9,7 +9,7 @@ SSRFuzz is a tool to find Server Side Request Forgery vulnerabilities, with CRLF
 
 ## Installation
 
-Run the following command to intsall
+Run the following command to install:
 
 ```bash
 go get -u github.com/ryandamour/ssrfuzz
